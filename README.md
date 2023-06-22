@@ -54,11 +54,11 @@ Default command:
 python run_training.py
 ```
 
-Checkout the results on weights and biases.
+Checkout the [results](https://wandb.ai/florians/DCASE23_Task1/reports/Test-run-of-CPJKU-Submission-to-DCASE23-Task-1--Vmlldzo0NzEwNjIy?accessToken=vcgldrnpus2r27wr2hir9g0t6l84mat2n9760ab3xf2nbzu9p5850h2g4t8pas63) on Weights & Biases.
 
 ## Device Impulse Reponses
 
-The device impulse responses in [datasets/dirs](datasets/dirs) are from [MicIRP](http://micirp.blogspot.com/). All files
+The device impulse responses in [datasets/dirs](datasets/dirs) are downloaded from [MicIRP](http://micirp.blogspot.com/). All files
 are shared via Creative Commons license. All credits go to MicIRP & Xaudia.com.
 
 

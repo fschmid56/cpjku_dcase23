@@ -38,7 +38,7 @@ Run training on the [TAU22 dataset](https://zenodo.org/record/6337421):
 python run_training.py
 ```
 
-The configuration can be adapted using the command line, e.g. chaning the probability of the device impulse response augmentation:
+The configuration can be adapted using the command line, e.g. changing the probability of the device impulse response augmentation:
 
 ```
 python run_training.py --dir_prob=0.4
@@ -46,15 +46,36 @@ python run_training.py --dir_prob=0.4
 
 The results are automatically logged using Weights & Biases.
 
+The models can be quantized using Quantization Aware Training (QAT). For this, the trained model from the previous step is loaded by
+specifying the Wandb ID and fine-tuned using QAT for 24 epochs. The following command can be used:
+
+```
+python run_qat.py --wandb_id=c0a7nzin
+```
+
+## Checkpoints
+
+Running the training procedure creates a folder [DCASE23_Task1](DCASE23_Task1). This folder contains subfolder named according
+to the ID assigned to the experiment by Weights and Biases. These subfolders contain checkpoints which can be used to load
+the trained models (see [run_qat.py](run_qat.py) for an example).
+
 ## Example experiments
 
-Default command: 
+Default parameters for training on TAU22: 
 
 ```
 python run_training.py
 ```
 
+Fine-tuning and quantizing model using Quantization Aware Training (trained model with wandb_id=c0a7nzin already included
+in GitHub repo):
+
+```
+python run_qat.py --wandb_id=c0a7nzin
+```
+
 Checkout the [results](https://wandb.ai/florians/DCASE23_Task1/reports/Test-run-of-CPJKU-Submission-to-DCASE23-Task-1--Vmlldzo0NzEwNjIy?accessToken=vcgldrnpus2r27wr2hir9g0t6l84mat2n9760ab3xf2nbzu9p5850h2g4t8pas63) on Weights & Biases.
+
 
 ## Device Impulse Reponses
 
@@ -66,7 +87,7 @@ are shared via Creative Commons license. All credits go to MicIRP & Xaudia.com.
 
 We provide the ensembled logits of 3 CP-ResNet [2] models and 3 PaSST [1] transformer models trained on the TAU22 development set train split.
 The teacher models are trained using the cropped dataset technique introduced in the technical report. The logits
-are automatically downloaded when running the code.
+are automatically downloaded when running the code and end up in the [resources](resources) folder.
 
 ## References
 

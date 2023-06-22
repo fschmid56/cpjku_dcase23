@@ -6,13 +6,15 @@ from torch.utils.data import DataLoader
 import argparse
 import torch.nn.functional as F
 import torch.nn as nn
+import os
+import pathlib
 
 from datasets.dcase22 import get_training_set, get_test_set
 from helpers.init import worker_init_fn
 from models.cp_mobile_clean import get_model
 from models.mel import AugmentMelSTFT
 from helpers.lr_schedule import exp_warmup_linear_down
-from helpers.utils import mixstyle
+from helpers.utils import mixstyle, QuantizationCallback, QuantParamFreezeCallback
 from helpers import nessi
 
 
@@ -42,6 +44,9 @@ class PLModule(pl.LightningModule):
                                expansion_rate=config.expansion_rate
                                )
 
+        # int8 model will be initialized later
+        self.model_int8 = None
+
         self.kl_div_loss = nn.KLDivLoss(log_target=True, reduction="none")  # KL Divergence loss for soft targets
 
         self.device_ids = ['a', 'b', 'c', 's1', 's2', 's3', 's4', 's5', 's6']
@@ -65,12 +70,23 @@ class PLModule(pl.LightningModule):
 
     def forward(self, x):
         """
-        :param x: batch of raw audio signals (waveforms)
+        :param x: batch of spectrograms
         :return: final model predictions
         """
-        x = self.mel_forward(x)
         x = self.model(x)
         return x
+
+    def quantized_forward(self, x):
+        """
+        :param x: batch of spectrograms
+        :return: final model predictions
+        """
+        # quantized forward needs to be done on cpu
+        orig_device = x.device
+        x = x.cpu()
+        self.model_int8.cpu()
+        y = self.model_int8(x)
+        return y.to(orig_device)
 
     def configure_optimizers(self):
         """
@@ -132,7 +148,17 @@ class PLModule(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         x, files, labels, devices, cities = val_batch
         x = self.mel_forward(x)
-        y_hat = self.model(x)
+
+        # fp32 accuracy + loss
+        y_hat = self.forward(x)
+        samples_loss = F.cross_entropy(y_hat, labels, reduction="none")
+        fp32_loss = samples_loss.mean()
+        _, preds = torch.max(y_hat, dim=1)
+        n_correct_pred_per_sample = (preds == labels)
+        fp32_n_correct_pred = n_correct_pred_per_sample.sum()
+
+        # quantized metrics
+        y_hat = self.quantized_forward(x)
         samples_loss = F.cross_entropy(y_hat, labels, reduction="none")
         loss = samples_loss.mean()
 
@@ -142,7 +168,8 @@ class PLModule(pl.LightningModule):
         n_correct_pred = n_correct_pred_per_sample.sum()
 
         dev_names = [d.rsplit("-", 1)[1][:-4] for d in files]
-        results = {'val_loss': loss, "n_correct_pred": n_correct_pred, "n_pred": len(labels)}
+        results = {'val_loss': loss, "n_correct_pred": n_correct_pred, "n_pred": len(labels),
+                   "fp32_val_loss": fp32_loss, "fp32_n_correct_pred": fp32_n_correct_pred}
 
         # log metric per device and scene
         for d in self.device_ids:
@@ -169,7 +196,10 @@ class PLModule(pl.LightningModule):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         val_acc = sum([x['n_correct_pred'] for x in outputs]) * 1.0 / sum(x['n_pred'] for x in outputs)
 
-        logs = {'val_acc': val_acc, 'val_loss': avg_loss}
+        fp32_avg_loss = torch.stack([x['fp32_val_loss'] for x in outputs]).mean()
+        fp32_val_acc = sum([x['fp32_n_correct_pred'] for x in outputs]) * 1.0 / sum(x['n_pred'] for x in outputs)
+
+        logs = {'val_acc': val_acc, 'val_loss': avg_loss, 'fp32_val.loss': fp32_avg_loss, 'fp32_val_acc': fp32_val_acc}
 
         # log metric per device and scene
         for d in self.device_ids:
@@ -200,6 +230,46 @@ class PLModule(pl.LightningModule):
         self.log_dict(logs)
 
 
+def fuse_model(module):
+    # fuse layers
+    module.model.eval()  # only works in eval mode
+    module.model.cpu()
+    module.model.fuse_model()
+
+    # put original net back on cuda
+    module.model.cuda()
+
+
+def prepare_quantized(module):
+    module.model.train()  # only works in train mode
+    module.model.cpu()
+
+    # give information of what kind of observers to attach
+    module.model.qconfig = torch.ao.quantization.get_default_qat_qconfig('fbgemm')
+
+    # prepare model for QAT, insert observers and fake_quants
+    module.model = torch.ao.quantization.prepare_qat(module.model)
+
+    # attach the quantized model to module
+    module.model_int8 = torch.ao.quantization.convert(module.model)
+
+    # put original net back on cuda and in train mode
+    module.model.cuda()
+    module.model.train()
+
+
+def load_pretrained_from_id(module, project_name, wandb_id):
+    ckpt_path = os.path.join(project_name, wandb_id, "checkpoints")
+    assert os.path.exists(ckpt_path), f"No checkpoint path '{ckpt_path}' found."
+    ckpt_files = [file for file in pathlib.Path(os.path.expanduser(ckpt_path)).rglob('*.ckpt')]
+    assert len(ckpt_files) > 0, f"No checkpoint files found in path {ckpt_path}."
+    latest_ckpt = sorted(ckpt_files)[-1]
+    state_dict = torch.load(latest_ckpt)['state_dict']
+    # remove "model" prefix
+    state_dict = {k[len("model."):]: state_dict[k] for k in state_dict.keys()}
+    module.model.load_state_dict(state_dict)
+
+
 def train(config):
     # logging is done using wandb
     wandb_logger = WandbLogger(
@@ -227,9 +297,15 @@ def train(config):
     # create pytorch lightening module
     pl_module = PLModule(config)
 
+    # load model to fine-tune via QAT
+    if config.wandb_id:
+        load_pretrained_from_id(pl_module, config.project_name, config.wandb_id)
+
+    # fuse layers and prepare for QAT
+    fuse_model(pl_module)
+    prepare_quantized(pl_module)
+
     # get model complexity from nessi and log results to wandb
-    # ATTENTION: this is before layer fusion, therefore the MACs and Params slightly deviate from what is
-    # reported in the challenge submission
     sample = next(iter(train_dl))[0][0].unsqueeze(0)
     shape = pl_module.mel_forward(sample).size()
     macs, params = nessi.get_model_size(pl_module.model, input_size=shape)
@@ -244,7 +320,9 @@ def train(config):
                          logger=wandb_logger,
                          accelerator='auto',
                          devices=1,
-                         callbacks=[lr_monitor])
+                         callbacks=[lr_monitor,
+                                    QuantizationCallback(),
+                                    QuantParamFreezeCallback(config.freeze_params_epochs)])
     # start training and validation for the specified number of epochs
     trainer.fit(pl_module, train_dl, test_dl)
 
@@ -254,7 +332,8 @@ if __name__ == '__main__':
 
     # general
     parser.add_argument('--project_name', type=str, default="DCASE23_Task1")
-    parser.add_argument('--experiment_name', type=str, default="CPJKU_Training")
+    parser.add_argument('--wandb_id', type=str, default=None)  # for loading a pre-trained model
+    parser.add_argument('--experiment_name', type=str, default="CPJKU_QAT")
     parser.add_argument('--num_workers', type=int, default=12)  # number of workers for dataloaders
 
     # dataset
@@ -270,7 +349,7 @@ if __name__ == '__main__':
     parser.add_argument('--expansion_rate', type=int, default=3)
 
     # training
-    parser.add_argument('--n_epochs', type=int, default=150)
+    parser.add_argument('--n_epochs', type=int, default=24)
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--mixstyle_p', type=float, default=0.4)  # frequency mixstyle
     parser.add_argument('--mixstyle_alpha', type=float, default=0.3)
@@ -287,11 +366,11 @@ if __name__ == '__main__':
     #  2. constant lr phase using value specified in 'lr' (for 'ramp_down_start' - 'warm_up_len' epochs)
     #  3. linearly decreasing to value 'las_lr_value' * 'lr' (for 'ramp_down_len' epochs)
     #  4. finetuning phase using a learning rate of 'last_lr_value' * 'lr' (for the rest of epochs up to 'n_epochs')
-    parser.add_argument('--lr', type=float, default=0.0009)
-    parser.add_argument('--warm_up_len', type=int, default=14)
-    parser.add_argument('--ramp_down_start', type=int, default=50)
-    parser.add_argument('--ramp_down_len', type=int, default=84)
-    parser.add_argument('--last_lr_value', type=float, default=0.005)  # relative to 'lr'
+    parser.add_argument('--lr', type=float, default=5e-5)
+    parser.add_argument('--warm_up_len', type=int, default=0)
+    parser.add_argument('--ramp_down_start', type=int, default=1)
+    parser.add_argument('--ramp_down_len', type=int, default=16)
+    parser.add_argument('--last_lr_value', type=float, default=0.1)  # relative to 'lr'
 
     # preprocessing
     parser.add_argument('--resample_rate', type=int, default=32000)
@@ -305,6 +384,10 @@ if __name__ == '__main__':
     parser.add_argument('--fmax', type=int, default=None)
     parser.add_argument('--fmin_aug_range', type=int, default=1)  # data augmentation: vary 'fmin' and 'fmax'
     parser.add_argument('--fmax_aug_range', type=int, default=1000)
+
+    # qat specific
+    # freeze quantizer parameters and batchnorm stats for last n epochs
+    parser.add_argument('--freeze_params_epochs', type=int, default=4)
 
     args = parser.parse_args()
     train(args)

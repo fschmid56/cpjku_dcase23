@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch.distributions.beta import Beta
+from pytorch_lightning.callbacks import Callback
 
 
 def mixstyle(x, p=0.4, alpha=0.4, eps=1e-6):
@@ -22,3 +23,26 @@ def mixstyle(x, p=0.4, alpha=0.4, eps=1e-6):
     sig_mix = f_sig * lmda + f_sig_perm * (1 - lmda)  # generate mixed standard deviation
     x = x_normed * sig_mix + mu_mix  # denormalize input using the mixed statistics
     return x
+
+
+class QuantizationCallback(Callback):
+    def __init__(self):
+        pass
+
+    def on_validation_epoch_start(self, trainer, pl_module):
+        pl_module.model.cpu()
+        pl_module.model_int8 = torch.ao.quantization.convert(pl_module.model, inplace=False)
+        pl_module.model.cuda()
+
+
+class QuantParamFreezeCallback(Callback):
+    def __init__(self, freeze_params_epochs=4):
+        self.freeze_params_epochs = freeze_params_epochs
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        if trainer.max_epochs - trainer.current_epoch <= self.freeze_params_epochs:
+            # for the last epochs, do the following:
+            # Freeze quantizer parameters
+            pl_module.model.apply(torch.ao.quantization.disable_observer)
+            # Freeze batch norm mean and variance estimates
+            pl_module.model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)

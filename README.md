@@ -5,11 +5,11 @@ to the [DCASE23 Task 1 "Low-complexity Acoustic Scene Classification"](https://d
 The implemented model **CP-Mobile** and training procedure scored the top rank in the challenge.
 
 The technical report describing the system can be found [here](https://dcase.community/documents/challenge2023/technical_reports/DCASE2023_Schmid_28_t1.pdf). 
-The official ranking of system's submitted to the challenge is available [here](https://dcase.community/challenge2023/task-low-complexity-acoustic-scene-classification-results).
+The official ranking of systems submitted to the challenge is available [here](https://dcase.community/challenge2023/task-low-complexity-acoustic-scene-classification-results).
 
 An extension to the technical report (containing an ablation study and further results) is submitted to the [DCASE Workshop](https://dcase.community/workshop2023/) and a link to the paper will be provided soon.
 
-## Setup 
+## Setup
 
 Create a conda environment:
 
@@ -23,7 +23,7 @@ Activate environment:
 conda activate cpjku_dcase23
 ```
 
-Download dataset from [this](https://zenodo.org/record/6337421) location.
+Download the dataset from [this](https://zenodo.org/record/6337421) location and extract the files.
 
 Adapt path to dataset in the file [datasets/dcase22.py](datasets/dcase22.py) and provide the location of the extracted
 "TAU-urban-acoustic-scenes-2022-mobile-development" folder. Put the path in the following variable:

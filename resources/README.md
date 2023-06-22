@@ -1,0 +1,2 @@
+Teacher logits will be automatically download when running the file run_training.py. You can also manually download
+them from this release: https://github.com/fschmid56/cpjku_dcase23/releases/tag/ensemble_logits 

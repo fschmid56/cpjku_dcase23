@@ -1,4 +1,4 @@
-# Complexity Calculator imported from :
+# Complexity Calculator imported from:
 # https://github.com/AlbertoAncilotto/NeSsi/blob/main/nessi.py
 
 import torchinfo

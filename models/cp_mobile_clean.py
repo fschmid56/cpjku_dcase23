@@ -160,7 +160,7 @@ class Network(nn.Module):
                                      channels_per_stage[stage_id + 1],
                                      n_blocks[stage_id],
                                      strides=strides,
-                                     expansion_rate=config['expansion_rate']
+                                     expansion_rate=expansion_rate
                                      )
             self.stages.add_module(f"s{stage_id + 1}", stage)
 

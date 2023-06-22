@@ -3,3 +3,4 @@ resources/*.pt
 resources/*.npy
 .idea
 .git
+wandb

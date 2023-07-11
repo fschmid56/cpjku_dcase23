@@ -349,7 +349,7 @@ if __name__ == '__main__':
     parser.add_argument('--expansion_rate', type=int, default=3)
 
     # training
-    parser.add_argument('--n_epochs', type=int, default=24)
+    parser.add_argument('--n_epochs', type=int, default=20)
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--mixstyle_p', type=float, default=0.4)  # frequency mixstyle
     parser.add_argument('--mixstyle_alpha', type=float, default=0.3)

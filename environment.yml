@@ -14,4 +14,5 @@ dependencies:
     - scikit-learn==1.0.2
     - pytorch-lightning==1.9.4
     - wandb==0.15.4
+    - timm==0.4.12
 

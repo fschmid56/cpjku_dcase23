@@ -89,6 +89,19 @@ We provide the ensembled logits of 3 CP-ResNet [2] models and 3 PaSST [1] transf
 The teacher models are trained using the cropped dataset technique introduced in the technical report. The logits
 are automatically downloaded when running the code and end up in the [resources](resources) folder.
 
+## Pre-Trained Teacher Models
+
+Based on a request, we also make the pre-trained teacher models available. 
+In total 12 pre-trained models are published:
+* 2 x PaSST trained with MixStyle and DIR: ```passt_ms_dir_1.pt``` and ```passt_ms_dir_2.pt```
+* 2 x PaSST trained with DIR: ```passt_dir_1.pt``` and ```passt_dir_2.pt```
+* 2 x PaSST trained with MixStyle: ```passt_ms_1.pt``` and ```passt_ms_2.pt```
+* 2 x CP-ResNet trained with MixStyle and DIR: ```cpr_ms_dir_1.pt``` and ```cpr_ms_dir_2.pt```
+* 2 x CP-ResNet trained with DIR: ```cpr_dir_1.pt``` and ```cpr_dir_2.pt```
+* 2 x CP-ResNet trained with MixStyle: ```cpr_ms_1.pt``` and ```cpr_ms_2.pt```
+
+The file ```run_teacher_validation.py``` is an example of how to use the teacher models for inference.
+
 ## References
 
 [1] Khaled Koutini, Jan Schlüter, Hamid Eghbal-zadeh, and Gerhard Widmer, “Efficient Training of Audio Transformers with Patchout,” in Interspeech, 2022.

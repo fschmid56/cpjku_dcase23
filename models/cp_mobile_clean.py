@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from models.utils import make_divisible
+from models.helpers.utils import make_divisible
 from torch.ao.quantization import QuantStub, DeQuantStub
 from torchvision.ops.misc import ConvNormActivation
 

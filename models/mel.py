@@ -80,7 +80,8 @@ class AugmentMelSTFT(nn.Module):
         mel_basis = torch.as_tensor(torch.nn.functional.pad(mel_basis, (0, 1), mode='constant', value=0),
                                     device=x.device)
         # apply mel filterbank to power spectrogram
-        melspec = torch.matmul(mel_basis, x)
+        with torch.cuda.amp.autocast(enabled=False):
+            melspec = torch.matmul(mel_basis, x)
         # calculate log mel spectrogram
         melspec = (melspec + 0.00001).log()
 

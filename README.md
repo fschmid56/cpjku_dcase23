@@ -25,7 +25,7 @@ conda activate cpjku_dcase23
 
 Download the dataset from [this](https://zenodo.org/record/6337421) location and extract the files.
 
-Adapt path to dataset in the file [datasets/dcase22.py](datasets/dcase22.py) and provide the location of the extracted
+Adapt path to dataset in the file [datasets/dcase23.py](datasets/dcase23.py) and provide the location of the extracted
 "TAU-urban-acoustic-scenes-2022-mobile-development" folder. Put the path in the following variable:
 
 ```
@@ -61,6 +61,8 @@ the trained models (see [run_qat.py](run_qat.py) for an example).
 
 ## Example experiments
 
+### Training the student: 
+
 Default parameters for training on TAU22: 
 
 ```
@@ -75,6 +77,19 @@ python run_qat.py --wandb_id=c0a7nzin
 ```
 
 Checkout the [results](https://wandb.ai/florians/DCASE23_Task1/reports/Test-run-of-CPJKU-Submission-to-DCASE23-Task-1--Vmlldzo0NzEwNjIy?accessToken=vcgldrnpus2r27wr2hir9g0t6l84mat2n9760ab3xf2nbzu9p5850h2g4t8pas63) on Weights & Biases.
+
+### Training the teacher:
+
+To train a CP-ResNet teacher model with 128K parameters, run: 
+
+```
+python run_cp-resnet_training.py
+```
+
+To fine-tune a pre-trained PaSST teacher model, run:
+```
+python run_passt_training.py
+```
 
 
 ## Device Impulse Reponses
@@ -93,12 +108,10 @@ are automatically downloaded when running the code and end up in the [resources]
 
 Based on a request, we also make the pre-trained teacher models available. 
 In total 12 pre-trained models are published:
-* 2 x PaSST trained with MixStyle and DIR: ```passt_ms_dir_1.pt``` and ```passt_ms_dir_2.pt```
-* 2 x PaSST trained with DIR: ```passt_dir_1.pt``` and ```passt_dir_2.pt```
-* 2 x PaSST trained with MixStyle: ```passt_ms_1.pt``` and ```passt_ms_2.pt```
-* 2 x CP-ResNet trained with MixStyle and DIR: ```cpr_ms_dir_1.pt``` and ```cpr_ms_dir_2.pt```
-* 2 x CP-ResNet trained with DIR: ```cpr_dir_1.pt``` and ```cpr_dir_2.pt```
-* 2 x CP-ResNet trained with MixStyle: ```cpr_ms_1.pt``` and ```cpr_ms_2.pt```
+* 3 x PaSST trained with Freq-MixStyle and DIR: ```passt_dirfms_1.pt```, ```passt_dirfms_2.pt``` and ```passt_dirfms_3.pt```
+* 3 x PaSST trained with Freq-MixStyle: ```passt_fms_1.pt```, ```passt_fms_2.pt``` and ```passt_fms_3.pt```
+* 3 x CP-ResNet with 128K parameters trained with Freq-MixStyle and DIR: ```cpr_128k_dirfms_1.pt```, ```cpr_128k_dirfms_2.pt``` and ```cpr_128k_dirfms_3.pt```
+* 3 x CP-ResNet with 128K parameters trained with Freq-MixStyle: ```cpr_128k_fms_1.pt```, ```cpr_128k_fms_2.pt``` and ```cpr_128k_fms_3.pt```
 
 The file ```run_teacher_validation.py``` is an example of how to use the teacher models for inference.
 

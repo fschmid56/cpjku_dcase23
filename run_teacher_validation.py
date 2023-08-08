@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import os
 from torch.hub import download_url_to_file
 
-from datasets.dcase22 import get_test_set
+from datasets.dcase23 import get_test_set
 from helpers.init import worker_init_fn
 from models.cp_resnet import get_model as get_cpresnet
 from models.passt import get_model as get_passt
@@ -178,43 +178,43 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=32)
 
     # model
-    parser.add_argument('--model_name', type=str, default="cpr_ms_dir_1")
+    parser.add_argument('--model_name', type=str, default="passt_dirfms_1")
 
     args = parser.parse_args()
 
-    if args.model_name in ["cpr_ms_dir_1",
-                           "cpr_ms_dir_2",
-                           "cpr_dir_1",
-                           "cpr_dir_2",
-                           "cpr_ms_1",
-                           "cpr_ms_2"]:
+    if args.model_name in ["cpr_128k_dirfms_1",
+                           "cpr_128k_dirfms_2",
+                           "cpr_128k_dirfms_3",
+                           "cpr_128k_fms_1",
+                           "cpr_128k_fms_2",
+                           "cpr_128k_fms_3"]:
         model_config = {
             "mel": {
-                "sr": 22050,
+                "sr": 32000,
                 "n_mels": 256,
-                "win_length": 2048,
-                "hopsize": 512,
-                "n_fft": 2048,
+                "win_length": 3072,
+                "hopsize": 750,
+                "n_fft": 4096,
                 "fmax": None,
-                "fmax_aug_range": 1,
+                "fmax_aug_range": 1000,
                 "fmin": 0,
                 "fmin_aug_range": 1
             },
             "net": {
-                "rho": 7,
-                "base_channels": 128,
-                "maxpool_stage1": [1],
-                "maxpool_kernel": (2, 1),
-                "maxpool_stride": (2, 1)
+                # "rho": 8,
+                # "base_channels": 32,
+                # "maxpool_stage1": [1],
+                # "maxpool_kernel": (2, 1),
+                # "maxpool_stride": (2, 1)
             },
             "model_fn": get_cpresnet
         }
-    elif args.model_name in ["passt_ms_dir_1",
-                             "passt_ms_dir_2",
-                             "passt_dir_1",
-                             "passt_dir_2",
-                             "passt_ms_1",
-                             "passt_ms_2"]:
+    elif args.model_name in ["passt_dirfms_1",
+                             "passt_dirfms_2",
+                             "passt_dirfms_3",
+                             "passt_fms_1",
+                             "passt_fms_2",
+                             "passt_fms_3"]:
         model_config = {
             "mel": {
                 "sr": 32000,
@@ -232,7 +232,7 @@ if __name__ == '__main__':
                 "n_classes": 10,
                 "input_fdim": 128,
                 "s_patchout_t": 0,
-                "s_patchout_f": 0
+                "s_patchout_f": 6
             },
             "model_fn": get_passt
         }

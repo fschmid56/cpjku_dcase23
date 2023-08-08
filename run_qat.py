@@ -9,7 +9,7 @@ import torch.nn as nn
 import os
 import pathlib
 
-from datasets.dcase22 import get_training_set, get_test_set
+from datasets.dcase23 import get_training_set, get_test_set
 from helpers.init import worker_init_fn
 from models.cp_mobile_clean import get_model
 from models.mel import AugmentMelSTFT

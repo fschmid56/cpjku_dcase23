@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from torch.hub import download_url_to_file
 
 
-dataset_dir = "/share/rk6/shared/dcase22/TAU-urban-acoustic-scenes-2022-mobile-development"
+dataset_dir = None
 assert dataset_dir is not None, "Specify 'TAU Urban Acoustic Scenes 2022 Mobile dataset' location in variable " \
                                 "'dataset_dir'. The dataset can be downloaded from this URL:" \
                                 " https://zenodo.org/record/6337421"

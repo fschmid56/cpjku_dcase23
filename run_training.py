@@ -254,7 +254,7 @@ if __name__ == '__main__':
 
     # general
     parser.add_argument('--project_name', type=str, default="DCASE23_Task1")
-    parser.add_argument('--experiment_name', type=str, default="CPJKU_Training")
+    parser.add_argument('--experiment_name', type=str, default="CPJKU_cp-mobile_student_training")
     parser.add_argument('--num_workers', type=int, default=12)  # number of workers for dataloaders
 
     # dataset

@@ -80,7 +80,7 @@ class PLModule(pl.LightningModule):
             results["devcnt." + d] = torch.as_tensor(0., device=self.device)
         for i, d in enumerate(devices):
             if d[0] == "i":
-                if self.current_epoch == 0 and batch_idx < 10:
+                if self.epoch == 0 and batch_idx < 10:
                     print(f"device {d} ignored!")
                 continue
             results["devloss." + d] = results["devloss." + d] + samples_loss[i]
@@ -91,7 +91,7 @@ class PLModule(pl.LightningModule):
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
 
         train_acc = sum([x['n_correct_pred'] for x in outputs]) * 1.0 / sum(x['n_pred'] for x in outputs)
-        logs = {'train.loss': avg_loss, 'train_acc': train_acc, 'step': float(self.current_epoch)}
+        logs = {'train.loss': avg_loss, 'train_acc': train_acc}
 
         for d in self.device_ids:
             dev_loss = torch.stack([x["devloss." + d] for x in outputs]).sum()
@@ -138,7 +138,7 @@ class PLModule(pl.LightningModule):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
 
         val_acc = sum([x['n_correct_pred'] for x in outputs]) * 1.0 / sum(x['n_pred'] for x in outputs)
-        logs = {'val.loss': avg_loss, 'val_acc': val_acc, 'step': float(self.current_epoch)}
+        logs = {'val.loss': avg_loss, 'val_acc': val_acc}
 
         for d in self.device_ids:
             dev_loss = torch.stack([x["devloss." + d] for x in outputs]).sum()
@@ -240,7 +240,7 @@ if __name__ == '__main__':
 
     # general
     parser.add_argument('--project_name', type=str, default="DCASE23_Task1")
-    parser.add_argument('--experiment_name', type=str, default="CPJKU_Training")
+    parser.add_argument('--experiment_name', type=str, default="CPJKU_cp-resnet_teacher_training")
     parser.add_argument('--num_workers', type=int, default=16)  # number of workers for dataloaders
 
     # dataset

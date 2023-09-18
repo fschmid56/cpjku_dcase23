@@ -5,6 +5,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import LearningRateMonitor
 import argparse
+import os
 
 from helpers.utils import mixstyle
 from helpers.lr_schedule import exp_warmup_linear_down
@@ -245,7 +246,7 @@ if __name__ == '__main__':
 
     # dataset
     # location to store resampled waveform
-    parser.add_argument('--cache_path', type=str, default="datasets/cpath")
+    parser.add_argument('--cache_path', type=str, default=os.path.join("datasets", "cpath"))
 
     # training
     parser.add_argument('--n_epochs', type=int, default=150)

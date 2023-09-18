@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 import argparse
 import torch.nn.functional as F
 import torch.nn as nn
+import os
 
 from datasets.dcase23 import get_training_set, get_test_set
 from helpers.init import worker_init_fn
@@ -259,7 +260,7 @@ if __name__ == '__main__':
 
     # dataset
     # location to store resampled waveform
-    parser.add_argument('--cache_path', type=str, default="datasets/cpath")
+    parser.add_argument('--cache_path', type=str, default=os.path.join("datasets", "cpath"))
 
     # model
     parser.add_argument('--n_classes', type=int, default=10)  # classification model with 'n_classes' output neurons

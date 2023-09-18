@@ -338,7 +338,7 @@ if __name__ == '__main__':
 
     # dataset
     # location to store resampled waveform
-    parser.add_argument('--cache_path', type=str, default="datasets/cpath")
+    parser.add_argument('--cache_path', type=str, default=os.path.join("datasets", "cpath"))
 
     # model
     parser.add_argument('--n_classes', type=int, default=10)  # classification model with 'n_classes' output neurons

@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
     # dataset
     # location to store resampled waveform
-    parser.add_argument('--cache_path', type=str, default="datasets/cpath")
+    parser.add_argument('--cache_path', type=str, default=os.path.join("datasets", "cpath"))
     parser.add_argument('--batch_size', type=int, default=32)
 
     # model
